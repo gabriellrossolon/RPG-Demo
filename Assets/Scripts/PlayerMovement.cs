@@ -20,13 +20,17 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 moveInput;
     private bool sprintInput;
     
-
     [Header("Crouch")]
     private bool crouchInput;
     private bool isCrouched;
     public float crouchSpeed;
     private float crouchHeight = 1.02f;
     private float crouchCenterY = 0.59f;
+
+    [Header("Jump")]
+    private bool isGrounded;
+    [SerializeField] private Transform playerFeet;
+    private float yForce;
     void Start()
     {
         charControll = GetComponent<CharacterController>();
@@ -38,7 +42,18 @@ public class PlayerMovement : MonoBehaviour
     {
         MovementControll();
         CrouchControll();
+        JumpControll();
 
+        SpeedController();
+    
+        if (yForce > -9.81f)
+        {
+            yForce += -9.81f * Time.deltaTime;
+        }
+    }
+
+    private void SpeedController()
+    {
         float targetSpeed;
 
         if (moveInput == Vector2.zero)
@@ -85,7 +100,7 @@ public class PlayerMovement : MonoBehaviour
         movement.y = 0;
 
         charControll.Move(movement * Time.deltaTime * utilizedSpeed);
-        charControll.Move(new Vector3(0, -9.81f, 0) * Time.deltaTime);
+        charControll.Move(new Vector3(0, yForce, 0) * Time.deltaTime);
 
         if(movement != Vector3.zero)
         {
@@ -131,4 +146,23 @@ public class PlayerMovement : MonoBehaviour
             charControll.height = normalHeight;
         }
     }
+
+    //Jump Controll
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        if (isGrounded)
+        {
+            anim.SetTrigger("isJump");
+            yForce = 5f;
+        }
+    }
+
+    private void JumpControll()
+    {
+        isGrounded = Physics.CheckSphere(playerFeet.position, 0.3f, ~LayerMask.GetMask("Player"));
+
+        anim.SetBool("isGrounded", isGrounded);
+    }
+   
+
 }
